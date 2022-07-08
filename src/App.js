@@ -1,6 +1,6 @@
 import React from 'react';
-import { Route, Routes } from 'react-router-dom';
-import {connect} from 'react-redux';
+import { Route, Routes, Navigate  } from 'react-router-dom';
+import { connect } from 'react-redux';
 
 import './App.css';
 
@@ -14,29 +14,29 @@ import { setCurrentUser } from '../src/redux/user/user.actions';
 class App extends React.Component {
   unsubscribeFromAuth = null;
 
-  componentDidMount(){
+  componentDidMount() {
 
-    const {setCurrentUser} = this.props;
+    const { setCurrentUser } = this.props;
 
     this.unsubscribeFromAuth = auth.onAuthStateChanged(async userAuth => {
-      if(userAuth){
+      if (userAuth) {
         const userRef = await createUserProfileDocument(userAuth);
-        userRef.onSnapshot(snapshot =>{
+        userRef.onSnapshot(snapshot => {
           setCurrentUser({
-              id:snapshot.id,
-              ...snapshot.data()
-            });
+            id: snapshot.id,
+            ...snapshot.data()
+          });
         });
       }
-      else{
+      else {
         setCurrentUser(userAuth);
-    }
-      
+      }
+
       //console.log(user);
-    });   
+    });
   }
 
-  componentWillUnmount(){
+  componentWillUnmount() {
     this.unsubscribeFromAuth();
   }
 
@@ -47,15 +47,29 @@ class App extends React.Component {
         <Routes>
           <Route exact path='/' element={<HomePage />} />
           <Route path='/shop' element={<ShopPage />} />
-          <Route path='/signin' element={<SignInAndSignUpPage />} />
+          <Route
+            exact
+            path='/signin'
+            element={
+              this.props.currentUser ?
+                (
+                  <Navigate to='/' />
+                ) : (
+                  <SignInAndSignUpPage />)
+            }
+          />
         </Routes>
-        </div>
+      </div>
     );
   }
 }
+
+const mapStateToProps = ({ user }) => ({
+  currentUser: user.currentUser
+})
 
 const mapDispatchToProps = dispatch => ({
   setCurrentUser: user => dispatch(setCurrentUser(user))
 })
 
-export default connect(null,mapDispatchToProps)(App);
+export default connect(mapStateToProps, mapDispatchToProps)(App);
